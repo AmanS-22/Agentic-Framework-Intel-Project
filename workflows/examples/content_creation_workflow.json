@@ -1,0 +1,194 @@
+{
+  "workflow_id": "content_creation_v1",
+  "name": "Content Creation Workflow",
+  "description": "Creates blog content with human review and SEO optimization",
+  "version": "1.0.0",
+  "triggers": {
+    "scheduled": "0 9 * * *",
+    "webhook": "/webhook/content-request",
+    "manual": true
+  },
+  "error_policy": "continue_on_failure",
+  "tasks": [
+    {
+      "task_id": "topic_research",
+      "name": "Topic Research",
+      "type": "ai_agent",
+      "agent_type": "research_agent",
+      "config": {
+        "model": "gpt-4",
+        "temperature": 0.7,
+        "instructions": "Research trending topics in AI and machine learning",
+        "output_schema": {
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "topic": {"type": "string"},
+                "relevance_score": {"type": "number"},
+                "search_volume": {"type": "number"}
+              }
+            }
+          }
+        }
+      },
+      "dependencies": [],
+      "timeout_seconds": 300,
+      "retry_policy": {
+        "max_retries": 2,
+        "backoff_factor": 1.5
+      }
+    },
+    {
+      "task_id": "topic_approval",
+      "name": "Topic Approval",
+      "type": "human_task",
+      "config": {
+        "priority": "high",
+        "instructions": "Review and select the best topic for the blog post",
+        "assignee_group": "content_managers",
+        "output_schema": {
+          "selected_topic": {"type": "string", "required": true},
+          "feedback": {"type": "string"},
+          "target_audience": {"type": "string"}
+        },
+        "timeout_seconds": 7200
+      },
+      "dependencies": ["topic_research"]
+    },
+    {
+      "task_id": "content_outline",
+      "name": "Create Content Outline",
+      "type": "ai_agent",
+      "agent_type": "writing_agent",
+      "config": {
+        "model": "gpt-4",
+        "temperature": 0.8,
+        "instructions": "Create a detailed outline for the selected topic",
+        "output_schema": {
+          "title": {"type": "string"},
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "heading": {"type": "string"},
+                "subpoints": {"type": "array", "items": {"type": "string"}}
+              }
+            }
+          },
+          "target_length": {"type": "number"}
+        }
+      },
+      "dependencies": ["topic_approval"]
+    },
+    {
+      "task_id": "outline_review",
+      "name": "Outline Review",
+      "type": "human_task",
+      "config": {
+        "priority": "medium",
+        "instructions": "Review and approve the content outline",
+        "assignee_group": "editors",
+        "output_schema": {
+          "approved": {"type": "boolean", "required": true},
+          "feedback": {"type": "string"},
+          "required_changes": {"type": "array", "items": {"type": "string"}}
+        },
+        "timeout_seconds": 3600
+      },
+      "dependencies": ["content_outline"]
+    },
+    {
+      "task_id": "write_content",
+      "name": "Write Full Content",
+      "type": "ai_agent",
+      "agent_type": "writing_agent",
+      "config": {
+        "model": "gpt-4",
+        "temperature": 0.7,
+        "instructions": "Write the full blog post based on the approved outline",
+        "output_schema": {
+          "content": {"type": "string"},
+          "word_count": {"type": "number"},
+          "readability_score": {"type": "number"}
+        }
+      },
+      "dependencies": ["outline_review"]
+    },
+    {
+      "task_id": "seo_optimization",
+      "name": "SEO Optimization",
+      "type": "ai_agent",
+      "agent_type": "seo_agent",
+      "config": {
+        "model": "gpt-4",
+        "temperature": 0.3,
+        "instructions": "Optimize content for SEO including keywords and meta descriptions",
+        "output_schema": {
+          "optimized_content": {"type": "string"},
+          "meta_title": {"type": "string"},
+          "meta_description": {"type": "string"},
+          "keywords": {"type": "array", "items": {"type": "string"}},
+          "seo_score": {"type": "number"}
+        }
+      },
+      "dependencies": ["write_content"]
+    },
+    {
+      "task_id": "final_approval",
+      "name": "Final Approval",
+      "type": "human_task",
+      "config": {
+        "priority": "high",
+        "instructions": "Final review and approval before publishing",
+        "assignee_group": "senior_editors",
+        "output_schema": {
+          "approved": {"type": "boolean", "required": true},
+          "publish_date": {"type": "string"},
+          "publish_channels": {"type": "array", "items": {"type": "string"}}
+        },
+        "timeout_seconds": 10800
+      },
+      "dependencies": ["seo_optimization"]
+    },
+    {
+      "task_id": "publish_content",
+      "name": "Publish Content",
+      "type": "service_call",
+      "config": {
+        "service": "cms_publisher",
+        "endpoint": "/api/v1/publish",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "dependencies": ["final_approval"]
+    }
+  ],
+  "context_schema": {
+    "content_request": {
+      "type": "object",
+      "properties": {
+        "category": {"type": "string"},
+        "target_audience": {"type": "string"},
+        "deadline": {"type": "string"}
+      }
+    }
+  },
+  "output_schema": {
+    "published_url": {"type": "string"},
+    "content_id": {"type": "string"},
+    "publish_timestamp": {"type": "string"},
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "total_time": {"type": "number"},
+        "human_tasks": {"type": "number"},
+        "ai_tasks": {"type": "number"}
+      }
+    }
+  }
+}
