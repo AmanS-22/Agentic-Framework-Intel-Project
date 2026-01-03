@@ -37,36 +37,6 @@ The server will start on http://localhost:8000 by default.
 
 Define workflows using JSON files in the `workflows/` folder and execute them via the orchestrator (`framework/core/orchestrator.py`). Extend the framework by adding agents, integrations, or workflow schemas.
 
-## Project structure
-
-Agentic-Framework-Intel-Project/
-├── api/
-│   └── main.py
-├── framework/
-│   ├── agents/
-│   │   └── llm_agent.py
-│   ├── core/
-│   │   └── orchestrator.py
-│   ├── integration/
-│   │   ├── airflow_dag_builder.py
-│   │   ├── human_task_manager.py
-│   │   └── kafka_broker.py
-│   └── schemas/
-│       ├── validation.py
-│       └── workflow_schema.py
-├── dags/
-├── workflows/
-│   └── examples/
-│       └── content_creation_workflow.json
-├── scripts/
-│   └── setup_infrastructure.sh
-├── tests/
-├── docker-compose.yml
-├── requirements.txt
-├── .env
-├── .gitignore
-└── README.md
-
 ## API Endpoints (examples)
 
 - `GET /` — Root endpoint (API status)
@@ -96,6 +66,3 @@ The framework is designed to support:
 - Update API docs and workflow examples when adding endpoints or schema changes.
 - Open issues or PRs describing changes and test coverage.
 
-## License
-
-Add your preferred license here (e.g., MIT). Include a `LICENSE` file at the repo root when ready.
